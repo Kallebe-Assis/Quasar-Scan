@@ -170,14 +170,14 @@ summary { cursor: pointer; color: var(--muted); }
   #atendchip { max-width: 130px; }
 }
 /* ícone de informação: as descrições longas aparecem só ao passar o mouse/tocar */
-.info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px;
+.infotip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px;
   margin-left: 6px; border-radius: 50%; border: 1px solid var(--muted); color: var(--muted); font: italic 700 11px/1 Georgia, serif;
   cursor: help; vertical-align: 2px; user-select: none; }
-.info:hover, .info:focus { color: var(--accent); border-color: var(--accent); outline: none; }
-.info .tip { display: none; position: fixed; z-index: 20; width: max-content; max-width: min(340px, 80vw);
+.infotip:hover, .infotip:focus { color: var(--accent); border-color: var(--accent); outline: none; }
+.infotip .tip { display: none; position: fixed; z-index: 20; width: max-content; max-width: min(340px, 80vw);
   background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
   font: 400 13px/1.45 "Segoe UI", system-ui, sans-serif; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.18); white-space: normal; }
-.info:hover .tip, .info:focus .tip { display: block; }
+.infotip:hover .tip, .infotip:focus .tip { display: block; }
 .panelbar .desc { display: flex; align-items: center; }
 .panelbar .desc b { display: inline; margin: 0; }
 .tool h2 { display: flex; align-items: center; }

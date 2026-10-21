@@ -65,7 +65,7 @@ async function getJSON(url, opts) {
 // infoize troca descrições longas por um ícone "i" com a explicação no balão:
 // o título das barras de ação fica visível e o texto vai para o ícone.
 function infoIcon(text) {
-  return `<span class="info" tabindex="0" role="button" aria-label="Mais informações">i<span class="tip">${text}</span></span>`;
+  return `<span class="infotip" tabindex="0" role="button" aria-label="Mais informações">i<span class="tip">${text}</span></span>`;
 }
 function infoize(root = document) {
   root.querySelectorAll(".panelbar .desc:not([data-info])").forEach(d => {
@@ -94,7 +94,7 @@ function infoize(root = document) {
 }
 // O balão é "fixed" e se posiciona perto do ícone, sem sair da tela.
 function placeTip(e) {
-  const icon = e.target.closest?.(".info");
+  const icon = e.target.closest?.(".infotip");
   if (!icon) return;
   const tip = icon.querySelector(".tip"), r = icon.getBoundingClientRect();
   tip.style.display = "block";
