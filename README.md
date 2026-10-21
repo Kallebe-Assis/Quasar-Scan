@@ -70,9 +70,9 @@ Opções de linha de comando: `QuasarScan.exe -porta 8765 -sem-navegador`
 Fluxo sugerido em um atendimento:
 
 1. **Relatório** → preencha cliente, código, plano e o problema relatado.
-2. **Saúde da conexão** → escolha *Cabeado* ou *Wi-Fi* e rode o teste completo (este é o “antes”).
+2. **Saúde da conexão** → escolha *Cabeado* ou *Wi-Fi* e rode o check-up (este é o “antes”).
 3. Investigue com **Análise geral**, **Wi-Fi**, **Diagnóstico de rede** ou deixe o **Monitoramento** rodando.
-4. Depois de resolver, rode o teste completo de novo (o “depois”).
+4. Depois de resolver, rode o check-up de novo (o “depois”).
 5. **Relatório** → descreva a solução e clique em **Gerar relatório** (imprimir ou salvar em PDF).
 
 ### Análise geral
@@ -89,10 +89,17 @@ Varredura da rede local (até uma /20; redes maiores varrem a /24 do computador)
 
 ### Saúde da conexão
 
-Teste completo em cerca de 15 segundos:
+Dois modos:
+
+| Modo | Duração | O que muda |
+|---|---|---|
+| **Rápido** | ~15 s | 25 pings por destino |
+| **Completo** | ~1,5 min | 1 minuto de latência (120 pings por destino, médias e jitter mais confiáveis) + teste de velocidade com bufferbloat no final |
+
+O que é medido:
 
 - Latência, jitter e perda até o **roteador**, o **DNS configurado**, **Cloudflare**, **Google** e um site
-  (IPv4 e IPv6), com 25 amostras por destino.
+  (IPv4 e IPv6).
 - **Qualidade para chamadas de vídeo** (Zoom/Teams/Meet).
 - **Traceroute** até 8.8.8.8 com detecção de **CGNAT**, **duplo NAT** e do salto onde a latência sobe.
 - **DNS**: velocidade do configurado x Cloudflare, Google e Quad9, e verificação de **sequestro de DNS**.
@@ -285,7 +292,7 @@ progresso em tempo real.
 | GET | `/api/interfaces` | placas de rede |
 | POST / GET | `/api/scan` / `/api/status` | inicia e acompanha a varredura |
 | GET | `/api/export.csv`, `/api/export.json` | exporta a última varredura |
-| GET | `/api/health` | teste completo (SSE) — `?plano=&meio=cabo\|wifi` |
+| GET | `/api/health` | check-up (SSE) — `?modo=rapido\|completo&plano=&meio=cabo\|wifi&server=` |
 | GET | `/api/speed` | teste de velocidade (SSE) — `?server=&segundos=` |
 | GET | `/api/wifi` | análise do Wi-Fi — `?scan=1` |
 | POST / GET | `/api/monitor/start`, `/api/monitor/stop`, `/api/monitor` | monitoramento |

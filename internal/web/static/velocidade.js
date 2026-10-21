@@ -36,8 +36,11 @@ $("sp-go").onclick = () => {
   speedStream.onerror = () => { stopSpeed(); showError("O teste de velocidade foi interrompido."); };
 };
 
-function renderSpeed(r) {
-  if (r.error) { $("sp-out").innerHTML = `<div class="finding critico" style="margin-top:12px"><b>Não foi possível testar</b>${esc(r.error)}</div>`; return; }
+function renderSpeed(r) { $("sp-out").innerHTML = speedHTML(r, true); }
+
+// speedHTML monta as métricas do teste de velocidade (withFindings: inclui os alertas).
+function speedHTML(r, withFindings) {
+  if (r.error) return `<div class="finding critico" style="margin-top:12px"><b>Não foi possível testar a velocidade</b>${esc(r.error)}</div>`;
   const pct = (v) => r.planMbps ? `<div class="sub">${(v / r.planMbps * 100).toFixed(0)}% do plano de ${r.planMbps} Mega</div>` : "";
   let html = `<div class="metrics" style="margin-top:12px">
     <div class="metric"><div class="label">Download</div><div class="value">${r.downloadMbps.toFixed(0)} <small>Mbps</small></div>${r.downLevel ? lvl(r.downLevel) : ""}${pct(r.downloadMbps)}</div>
@@ -48,7 +51,7 @@ function renderSpeed(r) {
     <div class="metric"><div class="label">Bufferbloat</div><div class="value">${lvl(r.bloatLevel)}</div><div class="sub">quanto a latência sobe em uso</div></div>
   </div>
   <div class="sub" style="margin-top:6px">Servidor: ${esc(r.server)} · ${r.dataMB.toFixed(0)} MB transferidos${r.linkMbps ? ` · placa de rede a ${r.linkMbps} Mbps` : ""}</div>`;
-  if (r.findings.length) html += `<div style="margin-top:10px">${findingsHTML(r.findings)}</div>`;
+  if (withFindings && r.findings.length) html += `<div style="margin-top:10px">${findingsHTML(r.findings)}</div>`;
   html += legend("plano", "bufferbloat");
-  $("sp-out").innerHTML = html;
+  return html;
 }

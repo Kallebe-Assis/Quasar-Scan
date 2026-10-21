@@ -106,6 +106,7 @@ async function render() {
       ["IP público", esc(h?.internet.publicIPv4 || scan?.internet?.publicIPv4)],
       ["IPv6", h ? esc(h.ipv6.text) : (scan?.internet?.ipv6 ? "Sim" : "Não")],
       ["Meio do teste", h ? (h.medium === "wifi" ? "Wi-Fi" : "Cabeado") : ""],
+      ["Tipo de teste", h ? (h.mode === "completo" ? `Check-up completo (${h.samples} pings por destino)` : `Teste rápido (${h.samples} pings por destino)`) : ""],
       ["CGNAT", h ? (cgnat ? "Sim" : "Não detectado") : ""],
       ["MTU do caminho", h?.mtu ? h.mtu.pathMtu + " bytes" : ""],
       ["Servidores DHCP", scan ? (scan.dhcpServers.length ? scan.dhcpServers.map(o => esc(o.server)).join(", ") : "nenhum respondeu") : ""],

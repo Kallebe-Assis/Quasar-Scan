@@ -1,6 +1,6 @@
 // Aba "Saúde da conexão": teste completo da Fase 3.
-const STEP_NAMES = { internet: "Conexão com a internet", latencia: "Latência (25 pings por destino)",
-  traceroute: "Traceroute até 8.8.8.8", dns: "DNS (velocidade e sequestro)", mtu: "MTU do caminho" };
+const STEP_NAMES = { internet: "Conexão com a internet", latencia: "Latência",
+  traceroute: "Traceroute até 8.8.8.8", dns: "DNS (velocidade e sequestro)", mtu: "MTU do caminho", velocidade: "Teste de velocidade" };
 const KIND_TAG = { privado: '<span class="tag">privado</span>', cgnat: '<span class="tag risk">CGNAT</span>', publico: '<span class="tag">público</span>' };
 
 // spark é um mini gráfico de barras para caber numa célula da tabela.
@@ -22,13 +22,45 @@ document.querySelectorAll("#meio button").forEach(b => b.onclick = () => {
 });
 app.ready.then(renderMedium);
 
+// Duração do teste: rápido (~15 s) ou completo (~1,5 min, com velocidade). Lembrado por técnico.
+let healthMode = "rapido";
+try { healthMode = localStorage.getItem("modoSaude") || "rapido"; } catch {}
+function renderMode() {
+  document.querySelectorAll("#modo button").forEach(b => b.classList.toggle("on", b.dataset.v === healthMode));
+  $("hgo").textContent = healthMode === "completo" ? "Executar check-up completo" : "Executar teste rápido";
+}
+document.querySelectorAll("#modo button").forEach(b => b.onclick = () => {
+  healthMode = b.dataset.v;
+  try { localStorage.setItem("modoSaude", healthMode); } catch {}
+  renderMode();
+});
+renderMode();
+const fmtSecs = (s) => s >= 60 ? `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s` : `${s} s`;
+
 function runHealth() {
   showError("");
   $("hgo").disabled = true;
   $("hprogress").style.display = "block";
-  const es = new EventSource(`api/health?plano=${app.atend.planoMbps || 0}&meio=${currentMedium()}`);
+  // O teste completo usa o mesmo servidor escolhido no teste de velocidade.
+  const server = $("sp-server").value === "librespeed" ? $("sp-url").value.trim() : "";
+  const es = new EventSource(`api/health?plano=${app.atend.planoMbps || 0}&meio=${currentMedium()}&modo=${healthMode}&server=${encodeURIComponent(server)}`);
+  let estimate = 15;
+  $("hspeed").textContent = ""; $("hbar").style.width = "0"; $("htime").textContent = "";
   es.addEventListener("inicio", (e) => {
-    $("hsteps").innerHTML = JSON.parse(e.data).steps.map(s => `<span id="step-${s}">${esc(STEP_NAMES[s] || s)}</span>`).join("");
+    const d = JSON.parse(e.data);
+    estimate = d.estimateS;
+    $("hphase").textContent = d.mode === "completo" ? "Check-up completo em andamento…" : "Teste rápido em andamento…";
+    $("hsteps").innerHTML = d.steps.map(s => `<span id="step-${s}">${esc(STEP_NAMES[s] || s)}</span>`).join("");
+  });
+  es.addEventListener("tempo", (e) => {
+    const t = JSON.parse(e.data);
+    $("hbar").style.width = Math.min(97, t / estimate * 100) + "%";
+    $("htime").textContent = `· ${fmtSecs(t)} decorridos` + (t < estimate ? ` · faltam ~${fmtSecs(estimate - t)}` : " · finalizando");
+  });
+  es.addEventListener("velocidade", (e) => {
+    const p = JSON.parse(e.data);
+    $("hspeed").textContent = p.phase === "latencia" ? "Velocidade: medindo latência do servidor…"
+      : `Velocidade: ${p.phase === "download" ? "download" : "upload"} ${p.mbps.toFixed(0)} Mbps · latência em uso ${p.pingMs.toFixed(0)} ms`;
   });
   es.addEventListener("etapa", (e) => $("step-" + JSON.parse(e.data))?.classList.add("done"));
   es.addEventListener("fim", (e) => {
@@ -53,7 +85,7 @@ function renderHealth(r) {
   if (cq) {
     html += `<div class="metrics">
       <div class="metric"><div class="label">Veredito</div><div class="value">${lvl(cq.level)}</div><div class="sub">${esc(cq.verdict)}</div></div>
-      <div class="metric"><div class="label">Latência média</div><div class="value">${cq.latencyMs.toFixed(0)} <small>ms</small></div>${lvl(rate("latencia", cq.latencyMs))}</div>
+      <div class="metric"><div class="label">Latência média</div><div class="value">${cq.latencyMs.toFixed(0)} <small>ms</small></div>${lvl(rate(r.medium === "wifi" ? "latencia-wifi" : "latencia", cq.latencyMs))}</div>
       <div class="metric"><div class="label">Jitter</div><div class="value">${cq.jitterMs.toFixed(1)} <small>ms</small></div>${lvl(rate("jitter", cq.jitterMs))}</div>
       <div class="metric"><div class="label">Perda de pacotes</div><div class="value">${cq.lossPct} <small>%</small></div>${lvl(rate("perda", cq.lossPct))}</div>
     </div><div class="sub" style="margin-top:6px">Base: ${esc(cq.basis)}</div>`;
@@ -67,8 +99,10 @@ function renderHealth(r) {
       others.map(f => `<div class="finding ${f.level}"><b>${esc(f.title)}</b>${esc(f.detail)}</div>`).join("") + `</div>`;
   }
 
+  if (r.speed) html += `<h2>Velocidade</h2>` + speedHTML(r.speed, false);
+
   html += `<h2>Latência por destino</h2><div class="tablewrap"><table><thead><tr>
-    <th>Destino</th><th>IP</th><th>Média</th><th>Mín / Máx</th><th>Jitter</th><th>Perda</th><th>25 pings</th><th>Resultado</th></tr></thead><tbody>` +
+    <th>Destino</th><th>IP</th><th>Média</th><th>Mín / Máx</th><th>Jitter</th><th>Perda</th><th>${r.samples} pings</th><th>Resultado</th></tr></thead><tbody>` +
     r.latency.map(t => {
       const s = t.stats;
       if (t.error) return `<tr><td>${esc(t.label)}</td><td class="mono">${esc(t.host)}</td><td colspan="6" class="bad">${esc(t.error)}</td></tr>`;
@@ -117,7 +151,7 @@ function renderHealth(r) {
 
   const w = r.medium === "wifi" ? "-wifi" : "";
   html += `<h2>Como ler as classificações</h2>` + legend("latencia" + w, "latencia-lan" + w, "jitter", "perda", "dns", "sinal");
-  html += `<div class="footer">Teste de ${fmtDate(r.startedAt)} · ${r.durationS.toFixed(1)} s</div>`;
+  html += `<div class="footer">${r.mode === "completo" ? "Check-up completo" : "Teste rápido"} de ${fmtDate(r.startedAt)} · ${fmtSecs(Math.round(r.durationS))} · ${r.samples} pings por destino</div>`;
   $("hcontent").innerHTML = html;
 }
 

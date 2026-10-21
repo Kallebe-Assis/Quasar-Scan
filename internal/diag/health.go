@@ -50,6 +50,9 @@ type HealthReport struct {
 	LinkMbps  uint64              `json:"linkMbps"`
 	PlanMbps  int                 `json:"planMbps,omitempty"`
 	Medium    string              `json:"medium"` // cabo ou wifi: define as faixas de latência
+	Mode      string              `json:"mode"`   // rapido ou completo
+	Samples   int                 `json:"samples"`
+	Speed     *SpeedResult        `json:"speed,omitempty"` // só no modo completo
 	IPv6      IPv6Status          `json:"ipv6"`
 	Wifi      *WifiReport         `json:"wifi,omitempty"`
 	Call      *CallQuality        `json:"call,omitempty"`
@@ -57,14 +60,47 @@ type HealthReport struct {
 	Findings  []TraceFinding      `json:"findings"`
 }
 
-// Etapas do teste, para a barra de progresso.
-var HealthSteps = []string{"internet", "latencia", "traceroute", "dns", "mtu"}
+// HealthMode define a duração do teste. O rápido dá um retrato em ~15 s; o completo
+// mede a latência por 1 minuto (médias e jitter mais confiáveis) e inclui o teste de
+// velocidade, rodando sozinho no final para não distorcer as outras medições.
+type HealthMode struct {
+	ID        string
+	Samples   int
+	Interval  time.Duration
+	Speed     bool
+	EstimateS int // duração aproximada, para a barra de progresso
+}
+
+var (
+	ModeRapido   = HealthMode{ID: "rapido", Samples: 25, Interval: 200 * time.Millisecond, EstimateS: 15}
+	ModeCompleto = HealthMode{ID: "completo", Samples: 120, Interval: 500 * time.Millisecond, Speed: true, EstimateS: 95}
+)
+
+// HealthModeFor devolve o modo pelo nome (padrão: rápido).
+func HealthModeFor(id string) HealthMode {
+	if id == ModeCompleto.ID {
+		return ModeCompleto
+	}
+	return ModeRapido
+}
+
+// Steps são as etapas do teste, para a barra de progresso.
+func (m HealthMode) Steps() []string {
+	steps := []string{"internet", "latencia", "traceroute", "dns", "mtu"}
+	if m.Speed {
+		steps = append(steps, "velocidade")
+	}
+	return steps
+}
 
 // HealthOptions traz dados do atendimento que melhoram o diagnóstico.
 // Medium "cabo" ou "wifi"; vazio detecta pela placa em uso.
 type HealthOptions struct {
-	PlanMbps int
-	Medium   string
+	PlanMbps    int
+	Medium      string
+	Mode        HealthMode
+	SpeedServer string              // vazio = Cloudflare
+	OnSpeed     func(SpeedProgress) // progresso do teste de velocidade (modo completo)
 }
 
 // IPv6Status resume se o IPv6 está habilitado e funcionando nesta conexão.
@@ -99,15 +135,13 @@ func ipv6Status(it *netinfo.Interface, internet bool) IPv6Status {
 	return st
 }
 
-// pingSamples/pingInterval: 25 pings a cada 200 ms (~5 s por destino, todos em paralelo).
-const (
-	pingSamples  = 25
-	pingInterval = 200 * time.Millisecond
-)
-
 // RunHealth executa o teste completo de saúde da conexão (Fase 3).
 func RunHealth(ctx context.Context, opt HealthOptions, onStep func(step string)) HealthReport {
-	rep := HealthReport{StartedAt: time.Now(), Findings: []TraceFinding{}, Latency: []LatencyTarget{}, Trace: []Hop{}, DNS: []DNSBench{}, PlanMbps: opt.PlanMbps, Medium: opt.Medium}
+	if opt.Mode.Samples == 0 {
+		opt.Mode = ModeRapido
+	}
+	rep := HealthReport{StartedAt: time.Now(), Findings: []TraceFinding{}, Latency: []LatencyTarget{}, Trace: []Hop{}, DNS: []DNSBench{},
+		PlanMbps: opt.PlanMbps, Medium: opt.Medium, Mode: opt.Mode.ID, Samples: opt.Mode.Samples}
 	ifaces, _ := netinfo.Interfaces()
 	var primary *netinfo.Interface
 	for i := range ifaces {
@@ -182,7 +216,7 @@ func RunHealth(ctx context.Context, opt HealthOptions, onStep func(step string))
 			lw.Add(1)
 			go func(t *LatencyTarget) {
 				defer lw.Done()
-				measureTarget(ctx, t, rep.Medium == "wifi")
+				measureTarget(ctx, t, rep.Medium == "wifi", opt.Mode)
 			}(&targets[i])
 		}
 		lw.Wait()
@@ -218,6 +252,19 @@ func RunHealth(ctx context.Context, opt HealthOptions, onStep func(step string))
 	}()
 	wg.Wait()
 
+	// Etapa 3 (completo): velocidade por último e sozinha, porque satura o link.
+	if opt.Mode.Speed && rep.Internet.Online && ctx.Err() == nil {
+		onSpeed := opt.OnSpeed
+		if onSpeed == nil {
+			onSpeed = func(SpeedProgress) {}
+		}
+		sp := RunSpeed(ctx, SpeedOptions{Server: opt.SpeedServer, PlanMbps: opt.PlanMbps}, onSpeed)
+		rep.Speed = &sp
+	}
+	if opt.Mode.Speed {
+		onStep("velocidade")
+	}
+
 	rep.IPv6 = ipv6Status(primary, rep.Internet.IPv6)
 	rep.Call = callQuality(rep.Latency)
 	diagnose(&rep)
@@ -225,7 +272,7 @@ func RunHealth(ctx context.Context, opt HealthOptions, onStep func(step string))
 	return rep
 }
 
-func measureTarget(ctx context.Context, t *LatencyTarget, wifi bool) {
+func measureTarget(ctx context.Context, t *LatencyTarget, wifi bool, mode HealthMode) {
 	t.RTTs = []float64{}
 	ip, err := Resolve(ctx, t.Host, "")
 	if err != nil {
@@ -234,7 +281,7 @@ func measureTarget(ctx context.Context, t *LatencyTarget, wifi bool) {
 		return
 	}
 	t.IP = ip.String()
-	opt := PingOptions{Count: pingSamples, Size: 32, Interval: pingInterval, Timeout: time.Second, WiFi: wifi}
+	opt := PingOptions{Count: mode.Samples, Size: 32, Interval: mode.Interval, Timeout: time.Second, WiFi: wifi}
 	t.Stats = Ping(ctx, ip, opt, func(r PingReply, _ PingStats) {
 		if r.OK {
 			t.RTTs = append(t.RTTs, r.RTTms)
@@ -412,6 +459,14 @@ func analyzeExtras(rep *HealthReport, add func(l, t, d string)) {
 	}
 	if rep.MTU != nil && rep.MTU.Level != "ok" {
 		add(map[string]string{"info": "info", "aviso": "aviso", "critico": "critico"}[rep.MTU.Level], fmt.Sprintf("MTU do caminho: %d", rep.MTU.PathMTU), rep.MTU.Verdict)
+	}
+	if rep.Speed != nil {
+		if rep.Speed.Error != "" {
+			add("aviso", "Teste de velocidade não concluído", rep.Speed.Error)
+		}
+		for _, f := range rep.Speed.Findings {
+			add(f.Level, f.Title, f.Detail)
+		}
 	}
 	if rep.Hijack != nil && rep.Hijack.Level != "ok" {
 		add(rep.Hijack.Level, "DNS responde domínios inexistentes", rep.Hijack.Verdict)

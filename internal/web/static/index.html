@@ -51,14 +51,17 @@
   <!-- ABA 2: saúde da conexão + velocidade -->
   <section class="tab" id="tab-saude">
     <div class="panelbar">
-      <div class="desc"><b>Teste completo da conexão</b>Latência até o roteador e a internet (IPv4 e IPv6), traceroute (CGNAT e duplo NAT), DNS (velocidade e sequestro), MTU, velocidade do cabo/Wi-Fi e qualidade para chamadas. Cerca de 15 segundos.</div>
+      <div class="desc"><b>Check-up da conexão</b>Latência até o roteador e a internet (IPv4 e IPv6), traceroute (CGNAT e duplo NAT), DNS (velocidade e sequestro), MTU, velocidade do cabo/Wi-Fi e qualidade para chamadas.<br><br><b>Rápido</b> (~15 s): 25 pings por destino.<br><b>Completo</b> (~1,5 min): 1 minuto de latência (120 pings por destino, médias mais confiáveis) e teste de velocidade com bufferbloat no final. O completo consome dados do plano.</div>
+      <div class="f inline">Teste<div class="seg" id="modo" role="group" aria-label="Duração do teste"><button data-v="rapido">Rápido</button><button data-v="completo">Completo</button></div></div>
       <div class="f inline">Conexão<div class="seg" id="meio" role="group" aria-label="Meio de conexão"><button data-v="cabo">Cabeado</button><button data-v="wifi">Wi-Fi</button></div></div>
       <label class="f inline">Plano (Mega)<input type="number" id="plano" class="plano" min="0" placeholder="ex.: 500" style="width:90px"></label>
       <button id="hgo">Executar teste completo</button>
     </div>
     <div class="progress" id="hprogress">
-      <b>Testando…</b>
+      <div><b id="hphase">Testando…</b> <span class="sub" id="htime"></span></div>
+      <div class="bar"><div id="hbar"></div></div>
       <div class="steps" id="hsteps"></div>
+      <div class="sub" id="hspeed" style="margin-top:6px"></div>
     </div>
     <div id="hcontent">
       <div class="empty"><b>Nenhum teste executado</b>Clique em “Executar teste completo” para diagnosticar a conexão deste computador.</div>

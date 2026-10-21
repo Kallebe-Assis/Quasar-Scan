@@ -263,17 +263,46 @@ func (s *Server) toolPort(w http.ResponseWriter, r *http.Request) {
 // health executa o teste completo da Fase 3 e envia o progresso por SSE.
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	ev := newStream(w)
-	ev.send("inicio", map[string]any{"steps": diag.HealthSteps})
+	q := r.URL.Query()
+	mode := diag.HealthModeFor(q.Get("modo"))
 	plan := queryInt(r, "plano", 0, 0, 100000)
 	if plan == 0 {
 		plan = s.planMbps()
 	}
-	rep := diag.RunHealth(r.Context(), diag.HealthOptions{PlanMbps: plan, Medium: r.URL.Query().Get("meio")}, func(step string) { ev.send("etapa", step) })
+	ev.send("inicio", map[string]any{"steps": mode.Steps(), "mode": mode.ID, "estimateS": mode.EstimateS})
+
+	// Avisa o tempo decorrido a cada segundo, para a barra de progresso.
+	start := time.Now()
+	done := make(chan struct{})
+	go func() {
+		t := time.NewTicker(time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-t.C:
+				ev.send("tempo", int(time.Since(start).Seconds()))
+			}
+		}
+	}()
+
+	rep := diag.RunHealth(r.Context(), diag.HealthOptions{
+		PlanMbps:    plan,
+		Medium:      q.Get("meio"),
+		Mode:        mode,
+		SpeedServer: q.Get("server"),
+		OnSpeed:     func(p diag.SpeedProgress) { ev.send("velocidade", p) },
+	}, func(step string) { ev.send("etapa", step) })
+	close(done)
 	if r.Context().Err() != nil {
 		return
 	}
 	s.hist.mu.Lock()
 	s.hist.health = append(s.hist.health, rep)
+	if rep.Speed != nil && rep.Speed.Error == "" {
+		s.hist.speed = append(s.hist.speed, *rep.Speed) // entra no antes/depois do relatório
+	}
 	s.hist.mu.Unlock()
 	s.saveJSON("saude", rep.StartedAt, rep)
 	ev.send("fim", rep)
