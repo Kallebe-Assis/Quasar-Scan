@@ -1,0 +1,7 @@
+# Resultados de atendimentos: contêm dados das redes dos clientes. Nunca versionar.
+relatorios/
+
+# Gerados pela compilação
+*.exe
+*.exe~
+dist/

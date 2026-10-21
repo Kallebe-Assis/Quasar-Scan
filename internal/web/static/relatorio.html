@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório de Atendimento</title>
+<link rel="icon" href="icon.png">
+<style>
+  /* O relatório é sempre claro: vai para impressão/PDF e para o cliente. */
+  :root { --text: #1b2330; --muted: #5f6b7a; --border: #d6dce3; --accent: #0b7fa3; --bg: #ffffff; --soft: #f4f6f8;
+    --l1: #1b7f3b; --l1-bg: #e5f4ea; --l2: #7a6a00; --l2-bg: #f7f1cf; --l3: #b25400; --l3-bg: #fdebd9; --l4: #b3261e; --l4-bg: #fbe7e5;
+    --ok-bg: #e5f4ea; --warn-bg: #fdf1dc; --crit-bg: #fbe7e5; --info-bg: #e5eef9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9edf1; color: var(--text); font: 13px/1.45 "Segoe UI", system-ui, sans-serif; }
+  .page { background: var(--bg); max-width: 900px; margin: 20px auto; padding: 32px 40px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+  .bar { max-width: 900px; margin: 16px auto 0; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding: 0 16px; }
+  .bar button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+  .bar button.ghost { background: #fff; color: var(--accent); border: 1px solid var(--border); }
+  .bar span { align-self: center; color: var(--muted); }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 14px; margin-bottom: 18px; }
+  header h1 { margin: 0; font-size: 20px; display: flex; gap: 10px; align-items: center; }
+  header h1 img { width: 28px; }
+  header .meta { text-align: right; color: var(--muted); font-size: 12px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); margin: 22px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 24px; }
+  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 3px 10px; margin: 0; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); padding: 5px 6px; }
+  td { border-bottom: 1px solid var(--border); padding: 5px 6px; vertical-align: top; overflow-wrap: anywhere; }
+  .kv dd, .finding, .box { overflow-wrap: anywhere; }
+  td.num { text-align: right; white-space: nowrap; }
+  .mono { font-family: Consolas, monospace; }
+  .lvl { display: inline-block; padding: 0 7px; border-radius: 9px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .lvl.excelente { color: var(--l1); background: var(--l1-bg); } .lvl.razoavel { color: var(--l2); background: var(--l2-bg); }
+  .lvl.ruim { color: var(--l3); background: var(--l3-bg); } .lvl.pessimo { color: var(--l4); background: var(--l4-bg); }
+  .better { color: var(--l1); font-weight: 600; } .worse { color: var(--l4); font-weight: 600; }
+  .finding { border-left: 4px solid; padding: 6px 10px; margin: 6px 0; border-radius: 4px; }
+  .finding b { display: block; }
+  .finding.critico { background: var(--crit-bg); border-color: var(--l4); } .finding.aviso { background: var(--warn-bg); border-color: var(--l3); }
+  .finding.info { background: var(--info-bg); border-color: var(--accent); } .finding.ok { background: var(--ok-bg); border-color: var(--l1); }
+  .box { background: var(--soft); border-radius: 6px; padding: 10px 12px; white-space: pre-wrap; }
+  .muted { color: var(--muted); }
+  .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; }
+  .sign div { border-top: 1px solid var(--text); padding-top: 4px; text-align: center; color: var(--muted); }
+  footer { margin-top: 30px; color: var(--muted); font-size: 11px; text-align: center; }
+  @media (max-width: 700px) { .page { padding: 20px 16px; margin: 10px 0; } .grid { grid-template-columns: 1fr; } .kv { grid-template-columns: 120px 1fr; } }
+  @media print {
+    body { background: #fff; } .page { box-shadow: none; margin: 0; max-width: none; padding: 0; } .noprint { display: none !important; }
+    h2 { break-after: avoid; } tr, .finding { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="bar noprint">
+  <span id="saved"></span>
+  <button class="ghost" id="save">Salvar cópia na pasta do cliente</button>
+  <button id="print">Imprimir / Salvar PDF</button>
+</div>
+<div class="page" id="page"><p class="muted">Carregando…</p></div>
+<script src="relatorio-view.js"></script>
+</body>
+</html>

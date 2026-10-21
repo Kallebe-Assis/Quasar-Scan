@@ -1,0 +1,37 @@
+QUASAR SCAN - diagnóstico e descoberta de rede local
+=====================================================
+
+REQUISITOS
+- Windows 10 ou 11, 64 bits.
+- Nenhuma instalação extra: não precisa de Go, Python, .NET nem internet.
+  A interface abre no navegador padrão (Edge, Chrome, Firefox...).
+
+INSTALAR
+1. Descompacte esta pasta em um local fixo, por exemplo C:\QuasarScan
+   (evite rodar de dentro do .zip ou da pasta Downloads/Temp).
+2. Dê dois cliques em "Criar atalho na Area de Trabalho.bat" (só na primeira vez).
+3. Use o ícone "Quasar Scan" da Área de Trabalho.
+
+AO ABRIR
+- O Windows pede permissão de administrador: clique em "Sim".
+  (Necessário para renovar IP. Sem administrador o resto funciona.)
+- Na primeira vez o Windows pode mostrar "O Windows protegeu o computador"
+  (SmartScreen), porque o programa não tem assinatura digital paga.
+  Clique em "Mais informações" e depois em "Executar assim mesmo".
+  Dica: antes de descompactar, clique com o botão direito no .zip >
+  Propriedades > marque "Desbloquear" > OK. Isso evita o aviso.
+- Se o antivírus bloquear ou apagar o QuasarScan.exe, é falso positivo
+  (programa novo, sem assinatura, que faz varredura de rede). Restaure-o em
+  Segurança do Windows > Proteção contra vírus e ameaças > Histórico de proteção.
+
+WI-FI
+- No Windows 11, para ver as redes Wi-Fi vizinhas, ative:
+  Configurações > Privacidade e segurança > Localização (e "Permitir que
+  aplicativos da área de trabalho acessem sua localização").
+
+ONDE FICAM OS RESULTADOS
+- Pasta "relatorios", ao lado do QuasarScan.exe, separada por cliente
+  quando o atendimento é preenchido na aba Relatório.
+
+FECHAR
+- Botão "Encerrar" no canto superior direito da interface.

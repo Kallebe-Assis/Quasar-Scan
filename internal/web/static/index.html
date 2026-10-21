@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quasar Scan</title>
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1><img src="icon.png" alt="">Quasar <span class="brand2">Scan</span></h1>
+  <nav class="tabs">
+    <button data-tab="analise" class="active">Análise geral</button>
+    <button data-tab="saude">Saúde da conexão</button>
+    <button data-tab="wifi">Wi-Fi</button>
+    <button data-tab="monitor">Monitoramento</button>
+    <button data-tab="ferramentas">Diagnóstico de rede</button>
+    <button data-tab="relatorio">Relatório</button>
+  </nav>
+  <div class="headright">
+    <button class="chip" id="atendchip" title="Dados do atendimento">Sem atendimento</button>
+    <span class="tag" id="adminchip" style="display:none"></span>
+    <button id="quit" class="ghost" title="Fecha o programa (os testes salvos continuam em relatorios\)">Encerrar</button>
+  </div>
+</header>
+<main>
+  <div id="error" class="finding critico" style="display:none;margin-bottom:14px"></div>
+
+  <!-- ABA 1: análise geral (varredura da rede) -->
+  <section class="tab active" id="tab-analise">
+    <div class="panelbar">
+      <div class="desc"><b>Varredura da rede local</b>Descobre todos os dispositivos conectados (com nome, modelo e serviços), verifica servidores DHCP e mostra como a rede está configurada.</div>
+      <div class="controls">
+        <select id="iface" title="Interface de rede"></select>
+        <input type="text" id="cidr" class="mono" placeholder="faixa (opcional)" title="Ex.: 192.168.0.0/24. Vazio = rede da interface" style="width:150px">
+        <label class="chk"><input type="checkbox" id="ports" checked> Portas</label>
+        <label class="chk"><input type="checkbox" id="inet" checked> Testes de internet</label>
+        <button id="go">Iniciar varredura</button>
+      </div>
+    </div>
+    <div class="progress" id="progress">
+      <div><b id="phase">Iniciando…</b> <span class="sub" id="counts"></span></div>
+      <div class="bar"><div id="barfill"></div></div>
+    </div>
+    <div id="content">
+      <div class="empty"><b>Pronto para varrer</b>Escolha a interface e clique em “Iniciar varredura”. Nada é enviado para fora desta máquina.</div>
+    </div>
+  </section>
+
+  <!-- ABA 2: saúde da conexão + velocidade -->
+  <section class="tab" id="tab-saude">
+    <div class="panelbar">
+      <div class="desc"><b>Teste completo da conexão</b>Latência até o roteador e a internet (IPv4 e IPv6), traceroute (CGNAT e duplo NAT), DNS (velocidade e sequestro), MTU, velocidade do cabo/Wi-Fi e qualidade para chamadas. Cerca de 15 segundos.</div>
+      <div class="f inline">Conexão<div class="seg" id="meio" role="group" aria-label="Meio de conexão"><button data-v="cabo">Cabeado</button><button data-v="wifi">Wi-Fi</button></div></div>
+      <label class="f inline">Plano (Mega)<input type="number" id="plano" class="plano" min="0" placeholder="ex.: 500" style="width:90px"></label>
+      <button id="hgo">Executar teste completo</button>
+    </div>
+    <div class="progress" id="hprogress">
+      <b>Testando…</b>
+      <div class="steps" id="hsteps"></div>
+    </div>
+    <div id="hcontent">
+      <div class="empty"><b>Nenhum teste executado</b>Clique em “Executar teste completo” para diagnosticar a conexão deste computador.</div>
+    </div>
+
+    <h2 style="margin-top:30px">Teste de velocidade</h2>
+    <div class="panelbar">
+      <div class="desc"><b>Download, upload e latência em uso</b>Mede download, upload e quanto a latência sobe com a internet em uso (<i>bufferbloat</i>). Consome dados: num plano de 500 Mega, cerca de 1 GB.</div>
+      <div class="controls">
+        <select id="sp-server"><option value="">Cloudflare</option><option value="librespeed">Servidor do provedor (LibreSpeed)…</option></select>
+        <input type="text" id="sp-url" class="mono" placeholder="http://speedtest.provedor.com.br/backend" style="width:290px;display:none">
+        <select id="sp-dur" title="Duração de cada fase"><option value="8">8 s por fase</option><option value="10" selected>10 s por fase</option><option value="15">15 s por fase</option></select>
+        <button id="sp-go">Iniciar teste de velocidade</button>
+      </div>
+    </div>
+    <div id="sp-out"></div>
+  </section>
+
+  <!-- ABA 3: Wi-Fi -->
+  <section class="tab" id="tab-wifi">
+    <div class="panelbar">
+      <div class="desc"><b>Análise do Wi-Fi</b>Sinal, canal, banda, padrão e segurança da conexão atual, e as redes vizinhas que disputam o canal — com sugestão do melhor canal.</div>
+      <button id="wgo">Analisar Wi-Fi</button>
+    </div>
+    <div id="wcontent">
+      <div class="empty"><b>Wi-Fi não analisado</b>Use num notebook conectado ao Wi-Fi do cliente, no cômodo onde está a reclamação.</div>
+    </div>
+  </section>
+
+  <!-- ABA 4: monitoramento contínuo -->
+  <section class="tab" id="tab-monitor">
+    <div class="panelbar">
+      <div class="desc"><b>Monitoramento contínuo</b>Pinga o roteador e a internet a cada segundo e registra cada queda e pico, dizendo se o problema foi na rede local ou no provedor. Ideal para “cai de vez em quando”. Continua rodando mesmo fechando o navegador, e o computador não entra em suspensão enquanto monitora.</div>
+      <div class="controls">
+        <select id="m-dur">
+          <option value="5">5 minutos</option><option value="15">15 minutos</option><option value="30" selected>30 minutos</option>
+          <option value="60">1 hora</option><option value="120">2 horas</option><option value="240">4 horas</option>
+          <option value="480">8 horas</option><option value="720">12 horas</option><option value="0">Até parar</option>
+        </select>
+        <button id="m-go">Iniciar monitoramento</button>
+      </div>
+    </div>
+    <div id="mcontent">
+      <div class="empty"><b>Nenhum monitoramento</b>Escolha a duração e clique em “Iniciar monitoramento”.</div>
+    </div>
+  </section>
+
+  <!-- ABA 5: ferramentas (comandos do CMD com interface) -->
+  <section class="tab" id="tab-ferramentas">
+    <div class="toolsgrid">
+      <div class="toolmenu" id="toolmenu"></div>
+      <div class="tool" id="toolpanel"></div>
+    </div>
+  </section>
+
+  <!-- ABA 6: atendimento e relatório -->
+  <section class="tab" id="tab-relatorio">
+    <div id="rcontent"></div>
+  </section>
+</main>
+<script src="app.js"></script>
+<script src="analise.js"></script>
+<script src="saude.js"></script>
+<script src="velocidade.js"></script>
+<script src="wifi.js"></script>
+<script src="monitor.js"></script>
+<script src="ferramentas.js"></script>
+<script src="relatorio.js"></script>
+</body>
+</html>
