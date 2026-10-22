@@ -1,5 +1,7 @@
 # Quasar Scan
 
+![Uploading Logo.jpg…]()
+
 ![Quasar Scan](assets/logo.png)
 
 Ferramenta de **descoberta e diagnóstico de rede** para técnicos de provedor de internet em atendimento ao cliente.
