@@ -1,6 +1,6 @@
 # Quasar Scan
 
-![Quasar Scan](assets/LogoII.png)
+![Quasar Scan](assets/Logo.png)
 
 ![Quasar Scan](assets/logo.png)
 
