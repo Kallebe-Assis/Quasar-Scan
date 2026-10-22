@@ -139,6 +139,21 @@ async function render() {
     if (quedas.length) html += `<p><b>Quedas:</b></p><table><tbody>` + quedas.map(e => `<tr><td>${new Date(e.start).toLocaleString("pt-BR")}</td><td class="num">${e.seconds}s</td><td>${esc(e.detail)}</td></tr>`).join("") + `</tbody></table>`;
   }
 
+  // Inspeção do computador
+  const pc = d.pc;
+  if (pc) {
+    const gradeTxt = { excelente: "Saudável", razoavel: "Pontos de atenção", ruim: "Problemas encontrados", pessimo: "Em risco" }[pc.grade];
+    const problems = pc.checklist.filter(c => c.status === "critico" || c.status === "aviso");
+    html += `<h2>Inspeção do computador</h2><p><b>Nota ${pc.score}/100 — ${gradeTxt}.</b> ${esc(pc.summary)} <span class="muted">(${esc(pc.system.os)}, ${fmtDate(pc.startedAt)})</span></p>`;
+    html += `<table><thead><tr><th>Conferência</th><th>Situação</th></tr></thead><tbody>` +
+      pc.checklist.map(c => `<tr><td>${esc(c.item)}</td><td>${{ ok: "✔ ", aviso: "⚠ ", critico: "✖ ", info: "" }[c.status]}${esc(c.value)}${c.detail && c.status !== "ok" ? `<div class="muted">${esc(c.detail)}</div>` : ""}</td></tr>`).join("") + `</tbody></table>`;
+    if (pc.findings?.length) {
+      html += `<p style="margin-top:10px"><b>Itens suspeitos ou que merecem atenção:</b></p>` + findings(pc.findings.slice(0, 12).map(f => ({ level: f.level, title: `${f.category}: ${f.title}`, detail: f.detail + (f.path ? " — " + f.path : "") })));
+    } else if (!problems.length) {
+      html += `<p>Nenhum programa, processo ou serviço suspeito encontrado.</p>`;
+    }
+  }
+
   // Dispositivos
   if (scan) {
     html += `<h2>Dispositivos na rede (${scan.hosts.length})</h2><table><thead><tr><th>IP</th><th>Nome</th><th>Fabricante / modelo</th><th>Tipo</th></tr></thead><tbody>` +
@@ -146,7 +161,7 @@ async function render() {
         <td>${esc(x.model || x.vendor || (x.randomMac ? "MAC aleatório" : "—"))}</td><td>${esc(x.deviceType)}</td></tr>`).join("") + `</tbody></table>`;
   }
 
-  if (!scan && !h && !sp && !w && !m) html += `<p class="muted" style="margin-top:20px">Nenhum teste foi feito neste atendimento ainda.</p>`;
+  if (!scan && !h && !sp && !w && !m && !pc) html += `<p class="muted" style="margin-top:20px">Nenhum teste foi feito neste atendimento ainda.</p>`;
 
   html += `<div class="sign"><div>${esc(a.tecnico) || "Técnico"}</div><div>${esc(a.cliente) || "Cliente"}</div></div>
     <footer>Gerado pelo Quasar Scan · ${fmtDate(d.geradoEm)}</footer>`;

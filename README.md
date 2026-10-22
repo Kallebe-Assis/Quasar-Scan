@@ -117,6 +117,24 @@ Sinal (dBm e %), banda, canal, padrão (Wi-Fi 4/5/6/7), velocidade do link e seg
 redes vizinhas com gráfico de ocupação dos canais e **sugestão do melhor canal**. Avisa sobre sinal fraco, rede
 2.4 GHz com 5 GHz disponível, canal congestionado, canal 2.4 GHz fora de 1/6/11, segurança fraca e link abaixo do plano.
 
+### Computador
+
+Inspeção do **próprio computador** (não da rede), somente leitura — nada é apagado ou alterado automaticamente:
+
+- **Nota de 0 a 100** e **conferência de proteção**: antivírus ativo, proteção em tempo real, idade das definições,
+  última verificação, proteção contra violações, ameaças ativas, firewall, UAC, atualizações do Windows,
+  reinicialização pendente, espaço em disco, memória, Secure Boot e proxy.
+- **Sinais de malware**: programas de inicialização (registro, pasta Inicializar, tarefas agendadas, Winlogon),
+  processos (com conexões de rede) e serviços, conferindo a **assinatura digital** (embutida ou por catálogo do
+  Windows) e o local do executável. Alerta para: nomes do Windows fora do lugar (ex.: `svchost.exe` fora da
+  System32), executáveis sem assinatura em pastas temporárias/de usuário, assinatura adulterada, comandos típicos
+  de malware (`powershell -enc`, `mshta http…`, `regsvr32 /i:http`…), Winlogon alterado, arquivo **hosts**
+  redirecionando bancos/redes sociais/antivírus, proxy forçado e entradas órfãs de programas desinstalados.
+- **Histórico de ameaças** do Windows Defender.
+- **Ferramentas do Windows**: verificação rápida, completa ou de pasta e atualização do **Windows Defender**;
+  verificação e reparo dos arquivos do sistema (**SFC**) e da imagem (**DISM**), com a saída ao vivo.
+  A detecção de vírus é a do Defender — o Quasar Scan não tem motor antivírus próprio.
+
 ### Monitoramento
 
 Pinga roteador, Cloudflare e Google a cada segundo por 5 minutos a 12 horas (ou até parar). Registra cada **queda**
@@ -273,6 +291,8 @@ internal/
   diag/                 ping, traceroute, DNS, porta, MTU, sequestro de DNS, Wi-Fi,
                         velocidade, teste de saúde e escalas de classificação
   monitor/              monitoramento contínuo (quedas e picos)
+  pc/                   inspeção do computador: assinatura digital, inicialização,
+                        processos, serviços, Defender (WMI), conferência e ações
   oui/                  fabricante pelo MAC (base IEEE embutida)
   web/                  servidor HTTP, API, atendimento/relatório e interface (static/)
 tools/
@@ -302,6 +322,9 @@ progresso em tempo real.
 | POST | `/api/tools/flushdns`, `/api/tools/renew` | limpar cache DNS, renovar IP |
 | GET / POST | `/api/atendimento` | dados do atendimento (`?novo=1` inicia outro) |
 | GET / POST | `/api/relatorio/dados`, `/api/relatorio/salvar` | relatório |
+| GET | `/api/pc/inspecao` | inspeção do computador (SSE) |
+| GET / POST | `/api/pc/acoes`, `/api/pc/acao`, `/api/pc/acao/cancelar` | Defender, SFC e DISM |
+| POST | `/api/pc/abrir`, `/api/pc/seguranca` | abrir local do arquivo, abrir Segurança do Windows |
 | GET | `/api/scales` | faixas de classificação |
 | POST | `/api/shutdown` | encerra o programa |
 

@@ -187,3 +187,23 @@ summary { cursor: pointer; color: var(--muted); }
 .seg button { background: var(--bg); color: var(--muted); border-radius: 0; padding: 6px 12px; font-weight: 500; }
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button.on { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+/* conferência de proteção (aba Computador) */
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.check { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 8px 12px; }
+.check b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.check .v { font-family: var(--mono); font-size: 12.5px; margin-top: 2px; word-break: break-word; }
+.check.ok { border-left-color: var(--l1); } .check.aviso { border-left-color: var(--l3); }
+.check.critico { border-left-color: var(--l4); } .check.info { border-left-color: var(--info); }
+.check .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.check.ok .dot { background: var(--l1); } .check.aviso .dot { background: var(--l3); }
+.check.critico .dot { background: var(--l4); } .check.info .dot { background: var(--info); }
+.scorebox { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.scorebox .num { font-size: 44px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.scorebox .num small { font-size: 16px; color: var(--muted); }
+details.block { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
+details.block > summary { font-weight: 600; color: var(--text); }
+details.block[open] > summary { margin-bottom: 10px; }
+.actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.actions .card button { margin-top: 8px; }
+button.mini { padding: 2px 9px; font-size: 12px; font-weight: 500; }

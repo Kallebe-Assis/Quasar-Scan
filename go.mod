@@ -9,3 +9,8 @@ require (
 )
 
 require golang.org/x/image v0.47.0
+
+require (
+	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+)

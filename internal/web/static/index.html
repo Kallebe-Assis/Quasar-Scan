@@ -14,6 +14,7 @@
     <button data-tab="analise" class="active">Análise geral</button>
     <button data-tab="saude">Saúde da conexão</button>
     <button data-tab="wifi">Wi-Fi</button>
+    <button data-tab="computador">Computador</button>
     <button data-tab="monitor">Monitoramento</button>
     <button data-tab="ferramentas">Diagnóstico de rede</button>
     <button data-tab="relatorio">Relatório</button>
@@ -91,6 +92,23 @@
     </div>
   </section>
 
+  <!-- ABA: inspeção do próprio computador -->
+  <section class="tab" id="tab-computador">
+    <div class="panelbar">
+      <div class="desc"><b>Inspeção do computador</b>Confere a proteção (antivírus, Defender, firewall, atualizações, UAC, disco) e procura sinais de malware: programas que iniciam sozinhos, processos e serviços sem assinatura digital ou rodando de pastas suspeitas, nomes do Windows disfarçados, comandos maliciosos típicos, arquivo hosts adulterado e proxy forçado.<br><br>A detecção de vírus é feita pelo Windows Defender (seção “Ferramentas do Windows”). Nada é apagado ou alterado automaticamente.</div>
+      <button id="pcgo">Inspecionar computador</button>
+    </div>
+    <div class="progress" id="pcprogress">
+      <div><b>Inspecionando…</b> <span class="sub" id="pccount"></span></div>
+      <div class="steps" id="pcsteps"></div>
+    </div>
+    <div id="pccontent">
+      <div class="empty"><b>Computador não inspecionado</b>Clique em “Inspecionar computador”. Leva alguns segundos.</div>
+    </div>
+    <h2 style="margin-top:30px">Ferramentas do Windows</h2>
+    <div id="pctools"></div>
+  </section>
+
   <!-- ABA 4: monitoramento contínuo -->
   <section class="tab" id="tab-monitor">
     <div class="panelbar">
@@ -128,6 +146,7 @@
 <script src="velocidade.js"></script>
 <script src="wifi.js"></script>
 <script src="monitor.js"></script>
+<script src="computador.js"></script>
 <script src="ferramentas.js"></script>
 <script src="relatorio.js"></script>
 </body>

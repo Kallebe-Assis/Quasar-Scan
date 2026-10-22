@@ -15,6 +15,7 @@ import (
 
 	"quasarscan/internal/diag"
 	"quasarscan/internal/monitor"
+	"quasarscan/internal/pc"
 	"quasarscan/internal/scan"
 )
 
@@ -41,6 +42,7 @@ type history struct {
 	speed   []diag.SpeedResult
 	wifi    []diag.WifiReport
 	monitor *monitor.Status
+	pc      *pc.Report
 }
 
 func (h *history) reset(a Atendimento) {
@@ -48,7 +50,7 @@ func (h *history) reset(a Atendimento) {
 	defer h.mu.Unlock()
 	a.IniciadoEm = time.Now()
 	h.atend = a
-	h.scans, h.health, h.speed, h.wifi, h.monitor = nil, nil, nil, nil, nil
+	h.scans, h.health, h.speed, h.wifi, h.monitor, h.pc = nil, nil, nil, nil, nil, nil
 }
 
 // firstLast devolve o primeiro e o último itens (para o antes/depois).
@@ -170,6 +172,7 @@ func (s *Server) reportData(w http.ResponseWriter, r *http.Request) {
 		"speedFirst": speedFirst, "speedLast": speedLast, "speeds": len(h.speed),
 		"wifi":    wifiLast,
 		"monitor": mon,
+		"pc":      pcSummary(h.pc),
 		"scales":  diag.Scales,
 	})
 }
@@ -202,4 +205,22 @@ func (s *Server) saveReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]string{"path": path})
+}
+
+// pcSummary leva para o relatório só o essencial da inspeção do computador
+// (a lista completa de processos e serviços não cabe num relatório para o cliente).
+func pcSummary(r *pc.Report) map[string]any {
+	if r == nil {
+		return nil
+	}
+	var important []pc.Finding
+	for _, f := range r.Findings {
+		if f.Level != "info" {
+			important = append(important, f)
+		}
+	}
+	return map[string]any{
+		"startedAt": r.StartedAt, "score": r.Score, "grade": r.Grade, "summary": r.Summary,
+		"system": r.System, "checklist": r.Checklist, "findings": important, "threats": r.Security.Threats,
+	}
 }

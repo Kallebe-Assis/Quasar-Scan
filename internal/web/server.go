@@ -13,6 +13,7 @@ import (
 
 	"quasarscan/internal/monitor"
 	"quasarscan/internal/netinfo"
+	"quasarscan/internal/pc"
 	"quasarscan/internal/scan"
 )
 
@@ -25,6 +26,7 @@ type Server struct {
 	onShutdown func()
 	hist       history
 	mon        monitor.Monitor
+	pcRunner   pc.Runner
 
 	mu        sync.Mutex
 	lastSaved string
@@ -47,6 +49,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/shutdown", s.shutdown)
 	s.registerTools(mux)
 	s.registerExtras(mux)
+	s.registerPC(mux)
 	return localOnly(mux)
 }
 
